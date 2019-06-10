@@ -145,3 +145,21 @@ class CrossEntropyLabelSmooth(nn.Module):
         targets = (1 - self.epsilon) * targets + self.epsilon / self.num_classes
         loss = (- targets * log_probs).mean(0).sum()
         return loss
+
+
+class KeyptLoss(object):
+    # def __init__(self):
+
+    def __call__(self, keypt_pre, keypt_label):
+        # [64, 17, 128, 64]
+
+        l2_loss = torch.nn.MSELoss().cuda()
+        keypts_loss_0 = l2_loss(keypt_pre[:, 0:5, :, :], keypt_label[:, 0:5, :, :])
+        keypts_loss_1 = l2_loss(keypt_pre[:, 5:7, :, :], keypt_label[:, 5:7, :, :])
+        keypts_loss_2 = l2_loss(keypt_pre[:, 7:9, :, :], keypt_label[:, 7:9, :, :])
+        keypts_loss_3 = l2_loss(keypt_pre[:, 9:13, :, :], keypt_label[:, 9:13, :, :])
+        keypts_loss_4 = l2_loss(keypt_pre[:, 13:15, :, :], keypt_label[:, 13:15, :, :])
+        keypts_loss_5 = l2_loss(keypt_pre[:, 15:17, :, :], keypt_label[:, 15:17, :, :])
+        Keypts_Loss = 5 / 17 * keypts_loss_0 + 2 / 17 * keypts_loss_1 + 2 / 17 * keypts_loss_2 + \
+                      4 / 17 * keypts_loss_3 + 2 / 17 * keypts_loss_4 + 2 / 17 * keypts_loss_5
+        return Keypts_Loss

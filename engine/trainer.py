@@ -76,11 +76,13 @@ def create_supervised_trainer_with_center(model, center_criterion, optimizer, op
         model.train()
         optimizer.zero_grad()
         optimizer_center.zero_grad()
-        img, target = batch
+        img, target, keypt_label = batch
         img = img.to(device) if torch.cuda.device_count() >= 1 else img
         target = target.to(device) if torch.cuda.device_count() >= 1 else target
-        score, feat = model(img)
-        loss = loss_fn(score, feat, target)
+        # TODO test not use GPU storing keypts
+        keypt_label = keypt_label.to(device) if torch.cuda.device_count() >= 1 else keypt_label
+        score, feat, keypt_pre = model(img)
+        loss = loss_fn(score, feat, target, keypt_pre, keypt_label)
         # print("Total loss is {}, center loss is {}".format(loss, center_criterion(feat, target)))
         loss.backward()
         optimizer.step()
@@ -270,12 +272,13 @@ def do_train_with_center(
 
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_validation_results(engine):
-        if engine.state.epoch % eval_period == 0:
-            evaluator.run(val_loader)
-            cmc, mAP = evaluator.state.metrics['r1_mAP']
-            logger.info("Validation Results - Epoch: {}".format(engine.state.epoch))
-            logger.info("mAP: {:.1%}".format(mAP))
-            for r in [1, 5, 10]:
-                logger.info("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
+        # if engine.state.epoch % eval_period == 0:
+        #     evaluator.run(val_loader)
+        #     cmc, mAP = evaluator.state.metrics['r1_mAP']
+        #     logger.info("Validation Results - Epoch: {}".format(engine.state.epoch))
+        #     logger.info("mAP: {:.1%}".format(mAP))
+        #     for r in [1, 5, 10]:
+        #         logger.info("CMC curve, Rank-{:<3}:{:.1%}".format(r, cmc[r - 1]))
+        return
 
     trainer.run(train_loader, max_epochs=epochs)

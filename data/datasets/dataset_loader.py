@@ -7,6 +7,11 @@
 import os.path as osp
 from PIL import Image
 from torch.utils.data import Dataset
+import re
+import data.torchvision_transforms_modify.transforms as T
+import data.torchvision_transforms_modify.functional as F
+import torch
+from data.transforms.transforms import RandomErasing
 
 
 def read_image(img_path):
@@ -17,6 +22,7 @@ def read_image(img_path):
         raise IOError("{} does not exist".format(img_path))
     while not got_img:
         try:
+            # image path = /home/chenyf/Market-1501/bounding_box_train/0984_c1s4_064686_03.jpg
             img = Image.open(img_path).convert('RGB')
             got_img = True
         except IOError:
@@ -43,3 +49,66 @@ class ImageDataset(Dataset):
             img = self.transform(img)
 
         return img, pid, camid, img_path
+
+
+class ImageDatasetTrain(Dataset):
+    """Image Person ReID Dataset with Keypoints"""
+
+    def __init__(self, cfg, dataset, transform=None):
+        self.cfg = cfg
+        self.dataset = dataset
+        self.transform = transform
+        # self.PIL_to_tensor = T.Compose([T.ToTensor()])
+        self.To_tensor = T.ToTensor()
+        self.Resize = T.Resize(cfg.INPUT.SIZE_TRAIN)
+        self.RandomHorizontalFlipReturnValue = T.RandomHorizontalFlipReturnValue(p=cfg.INPUT.PROB)
+        self.Pad = T.Pad(cfg.INPUT.PADDING)
+        self.RandomCropReturnValue = T.RandomCropReturnValue(cfg.INPUT.SIZE_TRAIN)
+        self.Normalize = T.Normalize(mean=cfg.INPUT.PIXEL_MEAN, std=cfg.INPUT.PIXEL_STD)
+        self.RandomErasing = RandomErasing(probability=cfg.INPUT.RE_PROB, mean=cfg.INPUT.PIXEL_MEAN)
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        img_path, pid, camid = self.dataset[index]
+        img = read_image(img_path)
+
+        # Transform
+        img = self.Resize(img)
+        img, if_flip = self.RandomHorizontalFlipReturnValue(img)
+        img = self.Pad(img)
+        img, random_crop_i, random_crop_j, random_crop_h, random_crop_w = self.RandomCropReturnValue(img)
+        img = self.To_tensor(img)
+        img = self.Normalize(img)
+        img = self.RandomErasing(img)
+
+        keypt_path = img_path.replace('Market-1501', 'Market_cpn_keypoints')
+        keypt_path = keypt_path.replace('bounding_box_train', 'bounding_box_train_256_2')
+        keypt_path = keypt_path.replace('.jpg', '')
+        for i in range(17):
+            keypt_path_temp = keypt_path + '_' + '%02d' % (i) + '.png'
+            keypt = Image.open(keypt_path_temp).convert('L')
+            keypt = self.Resize(keypt)
+            if if_flip:
+                keypt = F.hflip(keypt)
+            keypt = self.Pad(keypt)
+            keypt = F.crop(keypt, random_crop_i, random_crop_j, random_crop_h, random_crop_w)
+            keypt = self.To_tensor(keypt)
+            # keypt = torch.unsqueeze(keypt, 0)
+            if i == 0:
+                keypt_all = keypt
+            else:
+                keypt_all = torch.cat((keypt_all, keypt), 0)
+
+            # keypt_all = self.PIL_to_tensor(keypt_PIL)
+            # all_tensor = torch.cat((all_tensor, keypt_tensor), 0)
+
+        # if self.transform is not None:
+        #     img = self.transform(img)
+
+        # keypts = Image.open(img_path)
+        # if self.transform is not None:
+        #     img = self.transform(img)
+
+        return img, pid, camid, img_path, keypt_all

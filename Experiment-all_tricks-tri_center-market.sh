@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Experiment all tricks with center loss : 256x128-bs16x4-warmup10-erase0_5-labelsmooth_on-laststride1-bnneck_on-triplet_centerloss0_0005
 # Dataset 1: market1501
 # imagesize: 256x128
@@ -8,4 +9,4 @@
 # last stride 1
 # bnneck on
 # with center loss
-python3 tools/train.py --config_file='configs/softmax_triplet_with_center.yml' MODEL.DEVICE_ID "('2')" DATASETS.NAMES "('market1501')" DATASETS.ROOT_DIR "('/home/haoluo/data')" OUTPUT_DIR "('/home/haoluo/log/gu/reid_baseline_review/Opensource_test/market1501/Experiment-all-tricks-tri_center-256x128-bs16x4-warmup10-erase0_5-labelsmooth_on-laststride1-bnneck_on-triplet_centerloss0_0005')"
+nohup python3 tools/train.py --config_file='configs/softmax_triplet_with_center.yml' MODEL.DEVICE_ID "('0')" DATASETS.NAMES "('Market-1501')" DATASETS.ROOT_DIR "('/home/chenyf')" OUTPUT_DIR "('/home/chenyf/experiments/reid_baseline_review/exp_106')" > exp_106.file 2>&1 &

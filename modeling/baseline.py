@@ -147,9 +147,102 @@ class Baseline(nn.Module):
             self.bottleneck.apply(weights_init_kaiming)
             self.classifier.apply(weights_init_classifier)
 
-    def forward(self, x):
 
-        global_feat = self.gap(self.base(x))  # (b, 2048, 1, 1)
+        # --------------------------------  part-aligned constraint ------------------------------------ #
+        self.trans_conv_0 = torch.nn.ConvTranspose2d(in_channels=340, out_channels=64, kernel_size=2, stride=2,
+                                                     padding=0)
+        nn.init.normal(self.trans_conv_0.weight, std=0.001)
+        nn.init.constant(self.trans_conv_0.bias, 0)
+
+        self.trans_conv_1 = torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2,
+                                                     padding=0)
+        nn.init.normal(self.trans_conv_1.weight, std=0.001)
+        nn.init.constant(self.trans_conv_1.bias, 0)
+
+        self.trans_conv_2 = torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2,
+                                                     padding=0)
+        nn.init.normal(self.trans_conv_2.weight, std=0.001)
+        nn.init.constant(self.trans_conv_2.bias, 0)
+
+        self.trans_conv_3 = torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2,
+                                                     padding=0)
+        nn.init.normal(self.trans_conv_3.weight, std=0.001)
+        nn.init.constant(self.trans_conv_3.bias, 0)
+
+        self.conv_0 = torch.nn.Conv2d(in_channels=64, out_channels=5, kernel_size=1, stride=1, padding=0)
+        nn.init.normal(self.conv_0.weight, std=0.001)
+        nn.init.constant(self.conv_0.bias, 0)
+
+        self.conv_1 = torch.nn.Conv2d(in_channels=64, out_channels=2, kernel_size=1, stride=1, padding=0)
+        nn.init.normal(self.conv_1.weight, std=0.001)
+        nn.init.constant(self.conv_1.bias, 0)
+
+        self.conv_2 = torch.nn.Conv2d(in_channels=64, out_channels=2, kernel_size=1, stride=1, padding=0)
+        nn.init.normal(self.conv_2.weight, std=0.001)
+        nn.init.constant(self.conv_2.bias, 0)
+
+        self.conv_3 = torch.nn.Conv2d(in_channels=64, out_channels=4, kernel_size=1, stride=1, padding=0)
+        nn.init.normal(self.conv_3.weight, std=0.001)
+        nn.init.constant(self.conv_3.bias, 0)
+
+        self.conv_4 = torch.nn.Conv2d(in_channels=64, out_channels=2, kernel_size=1, stride=1, padding=0)
+        nn.init.normal(self.conv_4.weight, std=0.001)
+        nn.init.constant(self.conv_4.bias, 0)
+
+        self.conv_5 = torch.nn.Conv2d(in_channels=64, out_channels=2, kernel_size=1, stride=1, padding=0)
+        nn.init.normal(self.conv_5.weight, std=0.001)
+        nn.init.constant(self.conv_5.bias, 0)
+
+
+        # ---------------------------------------------------------------------------------------------- #
+
+
+    def forward(self, x):
+        backbone_last_layer = self.base(x)
+
+        # --------------------------------  part-aligned constraint ------------------------------------ #
+
+        keypt_group_0 = self.trans_conv_0(backbone_last_layer[:, 0:340, :, :])
+        keypt_group_0 = self.trans_conv_1(keypt_group_0)
+        keypt_group_0 = self.trans_conv_2(keypt_group_0)
+        keypt_group_0 = self.trans_conv_3(keypt_group_0)
+        keypt_group_0 = self.conv_0(keypt_group_0)
+
+        keypt_group_1 = self.trans_conv_0(backbone_last_layer[:, 340:680, :, :])
+        keypt_group_1 = self.trans_conv_1(keypt_group_1)
+        keypt_group_1 = self.trans_conv_2(keypt_group_1)
+        keypt_group_1 = self.trans_conv_3(keypt_group_1)
+        keypt_group_1 = self.conv_1(keypt_group_1)
+
+        keypt_group_2 = self.trans_conv_0(backbone_last_layer[:, 680:1020, :, :])
+        keypt_group_2 = self.trans_conv_1(keypt_group_2)
+        keypt_group_2 = self.trans_conv_2(keypt_group_2)
+        keypt_group_2 = self.trans_conv_3(keypt_group_2)
+        keypt_group_2 = self.conv_2(keypt_group_2)
+
+        keypt_group_3 = self.trans_conv_0(backbone_last_layer[:, 1020:1360, :, :])
+        keypt_group_3 = self.trans_conv_1(keypt_group_3)
+        keypt_group_3 = self.trans_conv_2(keypt_group_3)
+        keypt_group_3 = self.trans_conv_3(keypt_group_3)
+        keypt_group_3 = self.conv_3(keypt_group_3)
+
+        keypt_group_4 = self.trans_conv_0(backbone_last_layer[:, 1360:1700, :, :])
+        keypt_group_4 = self.trans_conv_1(keypt_group_4)
+        keypt_group_4 = self.trans_conv_2(keypt_group_4)
+        keypt_group_4 = self.trans_conv_3(keypt_group_4)
+        keypt_group_4 = self.conv_4(keypt_group_4)
+
+        keypt_group_5 = self.trans_conv_0(backbone_last_layer[:, 1700:2040, :, :])
+        keypt_group_5 = self.trans_conv_1(keypt_group_5)
+        keypt_group_5 = self.trans_conv_2(keypt_group_5)
+        keypt_group_5 = self.trans_conv_3(keypt_group_5)
+        keypt_group_5 = self.conv_5(keypt_group_5)
+
+        keypt_pre = torch.cat([keypt_group_0, keypt_group_1, keypt_group_2, keypt_group_3, keypt_group_4, keypt_group_5], dim=1)
+
+        # ---------------------------------------------------------------------------------------------- #
+
+        global_feat = self.gap(backbone_last_layer)  # (b, 2048, 1, 1)
         global_feat = global_feat.view(global_feat.shape[0], -1)  # flatten to (bs, 2048)
 
         if self.neck == 'no':
@@ -159,7 +252,7 @@ class Baseline(nn.Module):
 
         if self.training:
             cls_score = self.classifier(feat)
-            return cls_score, global_feat  # global feature for triplet loss
+            return cls_score, global_feat, keypt_pre  # global feature for triplet loss
         else:
             if self.neck_feat == 'after':
                 # print("Test with feature after BN")
