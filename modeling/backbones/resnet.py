@@ -125,12 +125,12 @@ class ResNet(nn.Module):
         # x = self.relu(x)    # add missed relu
         x = self.maxpool(x)
 
-        x = self.layer1(x)
-        x = self.layer2(x)
+        resnet_layer_1_outputs = self.layer1(x)
+        x = self.layer2(resnet_layer_1_outputs)
         x = self.layer3(x)
         x = self.layer4(x)
 
-        return x
+        return x, resnet_layer_1_outputs
 
     def load_param(self, model_path):
         param_dict = torch.load(model_path)

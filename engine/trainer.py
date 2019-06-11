@@ -78,13 +78,14 @@ def create_supervised_trainer_with_center(model, center_criterion, optimizer, op
         model.train()
         optimizer.zero_grad()
         optimizer_center.zero_grad()
-        img, target, keypt_label = batch
+        img, target, keypt_label, mask_label = batch
         img = img.to(device) if torch.cuda.device_count() >= 1 else img
         target = target.to(device) if torch.cuda.device_count() >= 1 else target
         # TODO test not use GPU storing keypts
         keypt_label = keypt_label.to(device) if torch.cuda.device_count() >= 1 else keypt_label
-        score, feat, keypt_pre = model(img)
-        loss = loss_fn(score, feat, target, keypt_pre, keypt_label)
+        mask_label = mask_label.to(device) if torch.cuda.device_count() >= 1 else mask_label
+        score, feat, keypt_pre, mask_pre = model(img)
+        loss = loss_fn(score, feat, target, keypt_pre, keypt_label, mask_pre, mask_label)
         # print("Total loss is {}, center loss is {}".format(loss, center_criterion(feat, target)))
         loss.backward()
         optimizer.step()

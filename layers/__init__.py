@@ -6,7 +6,7 @@
 
 import torch.nn.functional as F
 
-from .triplet_loss import TripletLoss, CrossEntropyLabelSmooth, KeyptLoss
+from .triplet_loss import TripletLoss, CrossEntropyLabelSmooth, KeyptLoss, MaskLoss
 from .cluster_loss import ClusterLoss
 from .center_loss import CenterLoss
 from .range_loss import RangeLoss
@@ -83,6 +83,7 @@ def make_loss_with_center(cfg, num_classes):    # modified by gu
         triplet = TripletLoss(cfg.SOLVER.MARGIN)  # triplet loss
         center_criterion = CenterLoss(num_classes=num_classes, feat_dim=feat_dim, use_gpu=True)  # center loss
         keypt_loss = KeyptLoss()
+        mask_loss = MaskLoss()
 
     elif cfg.MODEL.METRIC_LOSS_TYPE == 'triplet_range_center':
         triplet = TripletLoss(cfg.SOLVER.MARGIN)  # triplet loss
@@ -100,7 +101,7 @@ def make_loss_with_center(cfg, num_classes):    # modified by gu
         xent = CrossEntropyLabelSmooth(num_classes=num_classes)     # new add by luo
         print("label smooth on, numclasses:", num_classes)
 
-    def loss_func(score, feat, target, keypt_pre, keypt_label):
+    def loss_func(score, feat, target, keypt_pre, keypt_label, mask_pre, mask_label):
         # [64, 751] [64, 2048] [64] [64, 18, 128, 64]
         if cfg.MODEL.METRIC_LOSS_TYPE == 'center':
             if cfg.MODEL.IF_LABELSMOOTH == 'on':
@@ -122,10 +123,20 @@ def make_loss_with_center(cfg, num_classes):    # modified by gu
 
         elif cfg.MODEL.METRIC_LOSS_TYPE == 'triplet_center':
             if cfg.MODEL.IF_LABELSMOOTH == 'on':
-                return xent(score, target) + \
-                        triplet(feat, target)[0] + \
-                        cfg.SOLVER.CENTER_LOSS_WEIGHT * center_criterion(feat, target) + \
-                        65 * keypt_loss(keypt_pre, keypt_label)
+                loss_ori = xent(score, target) + \
+                triplet(feat, target)[0] + \
+                cfg.SOLVER.CENTER_LOSS_WEIGHT * center_criterion(feat, target)
+
+                if cfg.MODEL.IF_PAC_MODEL == 'yes' and cfg.MODEL.IF_VAC_MODEL == 'no':
+                    loss = loss_ori + 65 * keypt_loss(keypt_pre, keypt_label)
+                elif cfg.MODEL.IF_PAC_MODEL == 'no' and cfg.MODEL.IF_VAC_MODEL == 'yes':
+                    loss = loss_ori + 65 * keypt_loss(keypt_pre, keypt_label)
+                elif cfg.MODEL.IF_PAC_MODEL == 'yes' and cfg.MODEL.IF_VAC_MODEL == 'yes':
+                    loss = loss_ori + 10 * mask_loss(mask_pre, mask_label)
+                else:
+                    return loss_ori
+                return loss
+
                     # new add by luo, open label smooth
             else:
                 return F.cross_entropy(score, target) + \

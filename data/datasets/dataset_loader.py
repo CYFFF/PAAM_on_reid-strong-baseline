@@ -101,6 +101,25 @@ class ImageDatasetTrain(Dataset):
             else:
                 keypt_all = torch.cat((keypt_all, keypt), 0)
 
+        mask_path = img_path.replace('Market-1501', 'mask-anno')
+        mask = Image.open(mask_path).convert('L')
+        threshold = 100
+        table = []
+        for i in range(256):
+            if i < threshold:
+                table.append(0)
+            else:
+                table.append(1)
+        mask_bin = mask.point(table, '1')
+
+        mask_bin = self.Resize(mask_bin)
+        if if_flip:
+            mask_bin = F.hflip(mask_bin)
+        mask_bin = self.Pad(mask_bin)
+        mask_bin = F.crop(mask_bin, random_crop_i, random_crop_j, random_crop_h, random_crop_w)
+        mask_bin = self.To_tensor(mask_bin)
+
+
             # keypt_all = self.PIL_to_tensor(keypt_PIL)
             # all_tensor = torch.cat((all_tensor, keypt_tensor), 0)
 
@@ -111,4 +130,4 @@ class ImageDatasetTrain(Dataset):
         # if self.transform is not None:
         #     img = self.transform(img)
 
-        return img, pid, camid, img_path, keypt_all
+        return img, pid, camid, img_path, keypt_all, mask_bin

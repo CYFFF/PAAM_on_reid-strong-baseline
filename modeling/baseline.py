@@ -10,6 +10,7 @@ from torch import nn
 from .backbones.resnet import ResNet, BasicBlock, Bottleneck
 from .backbones.senet import SENet, SEResNetBottleneck, SEBottleneck, SEResNeXtBottleneck
 
+import copy
 
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
@@ -149,56 +150,89 @@ class Baseline(nn.Module):
 
 
         # --------------------------------  part-aligned constraint ------------------------------------ #
+
         self.trans_conv_0 = torch.nn.ConvTranspose2d(in_channels=340, out_channels=64, kernel_size=2, stride=2,
                                                      padding=0)
-        nn.init.normal(self.trans_conv_0.weight, std=0.001)
-        nn.init.constant(self.trans_conv_0.bias, 0)
+        nn.init.normal_(self.trans_conv_0.weight, std=0.001)
+        nn.init.constant_(self.trans_conv_0.bias, 0)
 
         self.trans_conv_1 = torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2,
                                                      padding=0)
-        nn.init.normal(self.trans_conv_1.weight, std=0.001)
-        nn.init.constant(self.trans_conv_1.bias, 0)
+        nn.init.normal_(self.trans_conv_1.weight, std=0.001)
+        nn.init.constant_(self.trans_conv_1.bias, 0)
 
         self.trans_conv_2 = torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2,
                                                      padding=0)
-        nn.init.normal(self.trans_conv_2.weight, std=0.001)
-        nn.init.constant(self.trans_conv_2.bias, 0)
+        nn.init.normal_(self.trans_conv_2.weight, std=0.001)
+        nn.init.constant_(self.trans_conv_2.bias, 0)
 
         self.trans_conv_3 = torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2,
                                                      padding=0)
-        nn.init.normal(self.trans_conv_3.weight, std=0.001)
-        nn.init.constant(self.trans_conv_3.bias, 0)
+        nn.init.normal_(self.trans_conv_3.weight, std=0.001)
+        nn.init.constant_(self.trans_conv_3.bias, 0)
 
         self.conv_0 = torch.nn.Conv2d(in_channels=64, out_channels=5, kernel_size=1, stride=1, padding=0)
-        nn.init.normal(self.conv_0.weight, std=0.001)
-        nn.init.constant(self.conv_0.bias, 0)
+        nn.init.normal_(self.conv_0.weight, std=0.001)
+        nn.init.constant_(self.conv_0.bias, 0)
 
         self.conv_1 = torch.nn.Conv2d(in_channels=64, out_channels=2, kernel_size=1, stride=1, padding=0)
-        nn.init.normal(self.conv_1.weight, std=0.001)
-        nn.init.constant(self.conv_1.bias, 0)
+        nn.init.normal_(self.conv_1.weight, std=0.001)
+        nn.init.constant_(self.conv_1.bias, 0)
 
         self.conv_2 = torch.nn.Conv2d(in_channels=64, out_channels=2, kernel_size=1, stride=1, padding=0)
-        nn.init.normal(self.conv_2.weight, std=0.001)
-        nn.init.constant(self.conv_2.bias, 0)
+        nn.init.normal_(self.conv_2.weight, std=0.001)
+        nn.init.constant_(self.conv_2.bias, 0)
 
         self.conv_3 = torch.nn.Conv2d(in_channels=64, out_channels=4, kernel_size=1, stride=1, padding=0)
-        nn.init.normal(self.conv_3.weight, std=0.001)
-        nn.init.constant(self.conv_3.bias, 0)
+        nn.init.normal_(self.conv_3.weight, std=0.001)
+        nn.init.constant_(self.conv_3.bias, 0)
 
         self.conv_4 = torch.nn.Conv2d(in_channels=64, out_channels=2, kernel_size=1, stride=1, padding=0)
-        nn.init.normal(self.conv_4.weight, std=0.001)
-        nn.init.constant(self.conv_4.bias, 0)
+        nn.init.normal_(self.conv_4.weight, std=0.001)
+        nn.init.constant_(self.conv_4.bias, 0)
 
         self.conv_5 = torch.nn.Conv2d(in_channels=64, out_channels=2, kernel_size=1, stride=1, padding=0)
-        nn.init.normal(self.conv_5.weight, std=0.001)
-        nn.init.constant(self.conv_5.bias, 0)
-
+        nn.init.normal_(self.conv_5.weight, std=0.001)
+        nn.init.constant_(self.conv_5.bias, 0)
 
         # ---------------------------------------------------------------------------------------------- #
 
+        # ------------------------------  visual attention constraint ---------------------------------- #
+
+        self.backbone_mask_resnet = nn.Sequential(
+            copy.deepcopy(self.base.layer2),
+            copy.deepcopy(self.base.layer3),
+            copy.deepcopy(self.base.layer4)
+        )
+
+        self.trans_conv_m0 = torch.nn.ConvTranspose2d(in_channels=2048, out_channels=64, kernel_size=2, stride=2,
+                                                      padding=0)
+        nn.init.normal_(self.trans_conv_0.weight, std=0.001)
+        nn.init.constant_(self.trans_conv_0.bias, 0)
+
+        self.trans_conv_m1 = torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2,
+                                                      padding=0)
+        nn.init.normal_(self.trans_conv_1.weight, std=0.001)
+        nn.init.constant_(self.trans_conv_1.bias, 0)
+
+        self.trans_conv_m2 = torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2,
+                                                      padding=0)
+        nn.init.normal_(self.trans_conv_2.weight, std=0.001)
+        nn.init.constant_(self.trans_conv_2.bias, 0)
+
+        self.trans_conv_m3 = torch.nn.ConvTranspose2d(in_channels=64, out_channels=64, kernel_size=2, stride=2,
+                                                      padding=0)
+        nn.init.normal_(self.trans_conv_3.weight, std=0.001)
+        nn.init.constant_(self.trans_conv_3.bias, 0)
+
+        self.conv_m0 = torch.nn.Conv2d(in_channels=64, out_channels=1, kernel_size=1, stride=1, padding=0)
+        nn.init.normal_(self.conv_0.weight, std=0.001)
+        nn.init.constant_(self.conv_0.bias, 0)
+
+        # ---------------------------------------------------------------------------------------------- #
 
     def forward(self, x):
-        backbone_last_layer = self.base(x)
+        backbone_last_layer, resnet_layer_1_outputs = self.base(x)
 
         # --------------------------------  part-aligned constraint ------------------------------------ #
 
@@ -240,7 +274,19 @@ class Baseline(nn.Module):
 
         keypt_pre = torch.cat([keypt_group_0, keypt_group_1, keypt_group_2, keypt_group_3, keypt_group_4, keypt_group_5], dim=1)
 
-        # ---------------------------------------------------------------------------------------------- #
+        # --------------------------------------------------------------------------------------------- #
+
+        # ------------------------------ visual attention constraint ---------------------------------- #
+
+        VAC_resnet_output = self.backbone_mask_resnet(resnet_layer_1_outputs)
+        mask_pre = self.trans_conv_m0(VAC_resnet_output)
+        mask_pre = self.trans_conv_m1(mask_pre)
+        mask_pre = self.trans_conv_m2(mask_pre)
+        mask_pre = self.trans_conv_m3(mask_pre)
+        mask_pre = self.conv_m0(mask_pre)
+
+        # --------------------------------------------------------------------------------------------- #
+
 
         global_feat = self.gap(backbone_last_layer)  # (b, 2048, 1, 1)
         global_feat = global_feat.view(global_feat.shape[0], -1)  # flatten to (bs, 2048)
@@ -252,7 +298,7 @@ class Baseline(nn.Module):
 
         if self.training:
             cls_score = self.classifier(feat)
-            return cls_score, global_feat, keypt_pre  # global feature for triplet loss
+            return cls_score, global_feat, keypt_pre, mask_pre  # global feature for triplet loss
         else:
             if self.neck_feat == 'after':
                 # print("Test with feature after BN")

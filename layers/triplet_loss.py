@@ -163,3 +163,11 @@ class KeyptLoss(object):
         Keypts_Loss = 5 / 17 * keypts_loss_0 + 2 / 17 * keypts_loss_1 + 2 / 17 * keypts_loss_2 + \
                       4 / 17 * keypts_loss_3 + 2 / 17 * keypts_loss_4 + 2 / 17 * keypts_loss_5
         return Keypts_Loss
+
+
+class MaskLoss(object):
+    def __call__(self, mask_pre, mask_label):
+
+        l2_loss = torch.nn.MSELoss().cuda()
+        MaskLoss = l2_loss(mask_pre, mask_label)
+        return MaskLoss
