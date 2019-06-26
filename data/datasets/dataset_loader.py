@@ -84,7 +84,8 @@ class ImageDatasetTrain(Dataset):
         img = self.RandomErasing(img)
 
         keypt_path = img_path.replace('Market-1501', 'Market_cpn_keypoints')
-        keypt_path = keypt_path.replace('bounding_box_train', 'bounding_box_train_256_2')
+        # keypt_path = keypt_path.replace('bounding_box_train', 'bounding_box_train_256_2')
+        keypt_path = keypt_path.replace('bounding_box_train', 'bounding_box_train_256')
         keypt_path = keypt_path.replace('.jpg', '')
         for i in range(17):
             keypt_path_temp = keypt_path + '_' + '%02d' % (i) + '.png'

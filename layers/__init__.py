@@ -132,7 +132,7 @@ def make_loss_with_center(cfg, num_classes):    # modified by gu
                 elif cfg.MODEL.IF_PAC_MODEL == 'no' and cfg.MODEL.IF_VAC_MODEL == 'yes':
                     loss = loss_ori + 65 * keypt_loss(keypt_pre, keypt_label)
                 elif cfg.MODEL.IF_PAC_MODEL == 'yes' and cfg.MODEL.IF_VAC_MODEL == 'yes':
-                    loss = loss_ori + 10 * mask_loss(mask_pre, mask_label)
+                    loss = loss_ori + 65 * keypt_loss(keypt_pre, keypt_label) + 20 * mask_loss(mask_pre, mask_label)
                 else:
                     return loss_ori
                 return loss
